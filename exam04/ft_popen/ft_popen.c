@@ -1,4 +1,5 @@
-#include "utils.c"
+#include "stdlib.h"
+#include "unistd.h"
 
 int ft_popen(const char *file, char *const argv[], char type)
 {
@@ -56,16 +57,16 @@ int ft_popen(const char *file, char *const argv[], char type)
 	return (-1);
 }
 
-int main()
-{
-	int  fd;
-	char *line;
+// int main()
+// {
+// 	int  fd;
+// 	char *line;
 
-	fd = ft_popen("ls", (char *const []){"ls", NULL}, 'r');
-	while ((line = get_next_line(fd)))
-		ft_putstr_fd(line, STDOUT_FILENO);
-	return (0);
-}
+// 	fd = ft_popen("ls", (char *const []){"ls", NULL}, 'r');
+// 	while ((line = get_next_line(fd)))
+// 		ft_putstr_fd(line, STDOUT_FILENO);
+// 	return (0);
+// }
 
 // int	main() {
 // 	int	fd = ft_popen("ls", (char *const []){"ls", NULL}, 'r');
