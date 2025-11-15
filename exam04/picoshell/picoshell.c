@@ -45,9 +45,9 @@ int    picoshell(char **cmds[])
 			// If not the last
 			if (i < (n_commands - 1))
 			{
-				close(fd[0]);
 				if (dup2(fd[1], STDOUT_FILENO) == -1)
 					exit(1);
+				close(fd[0]);
 				close(fd[1]);
 			}
 			execvp(cmds[i][0], cmds[i]);
