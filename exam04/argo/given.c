@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdlib.h> // change this to <stdlib.h>
 
-#include "argo.c"
 
 typedef struct	json {
 	enum {

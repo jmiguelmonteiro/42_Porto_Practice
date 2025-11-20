@@ -130,20 +130,150 @@ int	main(int argc, char **argv)
 	printf("\n");
 }
 
-json *parse_value(FILE *stream)
+int	parse_integer(json *dst, FILE *stream)
 {
-	(void)stream;
-	return NULL;
+	int n = 0;
+
+	if (fscanf(stream, "%d", &n) == 1)
+	{
+		dst->type = INTEGER;
+		dst->integer = n;
+		return 1;
+	}
+	return -1;
+}
+
+char *get_str(FILE *stream)
+{
+	int		c;
+	size_t	size = 16;
+	size_t	i = 0;
+	char	*str = malloc(size * sizeof(char));
+	char	*tmp;
+	if (!str)
+		return NULL;
+	getc(stream);	// consume fist "
+
+	while (true)
+	{
+		c = getc(stream);
+		if (c == '"')
+			break;
+		if (c == EOF)
+		{
+			free(str);
+			unexpected(stream);
+			return NULL;
+		}
+		if (i >= (size - 1))
+		{
+			size *= 2;
+			tmp = str;
+			str = realloc(tmp, size * sizeof(char));
+			if (!str)
+			{
+				free(tmp);
+				return NULL;
+			}
+		}
+		if (c == '\\')
+		{
+			c = peek(stream);
+			if ((c == '\\') || (c == '\"'))
+				str[i++] = getc(stream);
+			else
+			{
+				free(str);
+				unexpected(stream);
+				return NULL;
+			}
+		} else
+			str[i++] = c;
+	}
+	return str;
+}
+
+int	parse_string(json *dst, FILE *stream)
+{
+	char *str = NULL;
+
+	if ((str = get_str(stream)))
+	{
+		dst->type = STRING;
+		dst->string = str;
+		return 1;
+	}
+	return -1;
+}
+
+int	parse_map(json *dst, FILE *stream)
+{
+	dst->type = MAP;
+	dst->map.size = 0;
+	dst->map.data = NULL;
+	char c = getc(stream);	// consume first {
+
+	if (peek(stream) == '}')
+	{
+		getc(stream);
+		return 1;
+	}
+
+	while (true)
+	{
+		c = peek(stream);
+		if (c != '"')
+		{
+			unexpected(stream);
+			return -1;
+		}
+		dst->map.data = realloc(dst->map.data, (dst->map.size + 1) * sizeof(pair));
+		pair *node = &dst->map.data[dst->map.size];
+		dst->map.size++;
+		node->key = get_str(stream);
+		if (!node->key)
+			return -1;
+		if (expect(stream, ':') == 0)
+			return -1;
+		if (argo(&node->value, stream) == -1)
+			return -1;
+		c = peek(stream);
+		if (c == '}')
+		{
+			accept(stream, c);
+			break;
+		}
+		if (c == ',')
+			accept(stream, c);
+		else
+		{
+			unexpected(stream);
+			return -1;
+		}
+	}
+	return 1;
+}
+
+int parse_value(json *dst, FILE *stream)
+{
+	char c = peek(stream);
+
+	if (isdigit(c) || c == '-' || c == '+')
+		return(parse_integer(dst, stream));
+	else if (c == '"')
+		return(parse_string(dst, stream));
+	else if (c == '{')
+		return(parse_map(dst, stream));
+	else
+	{
+		unexpected(stream);
+		return -1;
+	}
 }
 
 int	argo(json *dst, FILE *stream)
 {
-	json	*res;
-
-	res = parse_value(stream);
-	if (!res)
+	if (parse_value(dst, stream) == -1)
 		return -1;
-
-	*dst = *res;
 	return 1;
 }
